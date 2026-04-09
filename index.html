@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: transparent; }
+
+  .portfolio {
+    padding: 1.5rem 0;
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  /* Tab buttons */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 1.75rem;
+  }
+  .tab-btn {
+    padding: 8px 22px;
+    border-radius: 999px;
+    border: 1px solid rgba(140,110,200,0.35);
+    background: transparent;
+    color: #7a6d99;
+    font-size: 13px;
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .tab-btn:hover { border-color: rgba(160,130,220,0.55); color: #ccc4e0; }
+  .tab-btn.active {
+    background: rgba(130,100,200,0.25);
+    border-color: rgba(160,130,220,0.6);
+    color: #e0d8f5;
+  }
+
+  /* Panels */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Section headings */
+  .section-heading {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #5a4d7a;
+    margin-bottom: 1.1rem;
+  }
+
+  /* Divider between sections */
+  .section-divider {
+    width: 40px;
+    height: 1px;
+    background: rgba(140,110,200,0.2);
+    margin: 2rem auto 1.75rem;
+  }
+
+  /* --- SHORTFORM --- */
+  .grid-wrap { width: 100%; }
+  .grid {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: nowrap;
+  }
+
+  @media (max-width: 900px) {
+    .grid-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(130,100,200,0.4) transparent;
+      padding-bottom: 1rem;
+    }
+    .grid-wrap::-webkit-scrollbar { height: 4px; }
+    .grid-wrap::-webkit-scrollbar-track { background: transparent; }
+    .grid-wrap::-webkit-scrollbar-thumb { background: rgba(130,100,200,0.4); border-radius: 4px; }
+    .grid { justify-content: flex-start; padding: 0 1rem 0.5rem; width: max-content; }
+  }
+
+  .vid-card {
+    flex: 0 0 208px;
+    background: #2a2535;
+    border-radius: 14px;
+    border: 1px solid rgba(140,110,200,0.25);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  @media (max-width: 900px) { .vid-card { flex: 0 0 160px; } }
+  .vid-card:hover { transform: translateY(-4px); border-color: rgba(160,130,220,0.55); }
+
+  .vid-thumb {
+    width: 100%;
+    aspect-ratio: 9/16;
+    position: relative;
+    overflow: hidden;
+    background: #1e1a2e;
+  }
+  .vid-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .play-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.25);
+    transition: background 0.2s;
+  }
+  .vid-card:hover .play-overlay { background: rgba(0,0,0,0.1); }
+  .play-btn {
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .play-btn svg { margin-left: 3px; }
+
+  .vid-info { padding: 10px 12px 12px; }
+  .vid-title {
+    font-size: 12px; color: #ccc4e0; line-height: 1.4; margin: 0 0 4px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .vid-platform { font-size: 11px; color: #7a6d99; letter-spacing: 0.3px; }
+
+  /* --- LONGFORM --- */
+  .lf-wrap { user-select: none; }
+
+  .stage {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 1200px;
+  }
+
+  .lf-card {
+    position: absolute;
+    width: 440px;
+    aspect-ratio: 16/9;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #1e1a2e;
+    border: 1px solid rgba(140,110,200,0.25);
+    transition: transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.5s ease, box-shadow 0.5s ease;
+    cursor: pointer;
+  }
+  .lf-card iframe { width: 100%; height: 100%; border: none; display: block; pointer-events: none; }
+  .lf-card.active {
+    transform: translateX(0) scale(1) rotateY(0deg);
+    opacity: 1; z-index: 3;
+    border-color: rgba(160,130,220,0.45);
+    box-shadow: 0 8px 40px rgba(100,60,200,0.2);
+    cursor: default;
+  }
+  .lf-card.active iframe { pointer-events: auto; }
+  .lf-card.prev  { transform: translateX(-320px) scale(0.78) rotateY(18deg); opacity: 0.55; z-index: 2; }
+  .lf-card.prev2 { transform: translateX(-480px) scale(0.62) rotateY(28deg); opacity: 0.25; z-index: 1; }
+  .lf-card.next  { transform: translateX(320px) scale(0.78) rotateY(-18deg); opacity: 0.55; z-index: 2; }
+  .lf-card.next2 { transform: translateX(480px) scale(0.62) rotateY(-28deg); opacity: 0.25; z-index: 1; }
+  .lf-card.hidden { opacity: 0; pointer-events: none; z-index: 0; }
+
+  .lf-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 1.25rem;
+  }
+  .nav-btn {
+    width: 36px; height: 36px;
+    background: rgba(130,100,200,0.15);
+    border: 1px solid rgba(130,100,200,0.3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #a08cc8;
+    transition: background 0.2s; font-size: 15px;
+  }
+  .nav-btn:hover { background: rgba(130,100,200,0.3); }
+
+  .lf-dots { display: flex; gap: 6px; align-items: center; }
+  .lf-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: rgba(130,100,200,0.25);
+    transition: background 0.2s, transform 0.2s; cursor: pointer;
+  }
+  .lf-dot.active { background: #9b7de0; transform: scale(1.4); }
+
+  .lf-label {
+    text-align: center;
+    margin-top: 0.85rem;
+    font-size: 13px; color: #ccc4e0; letter-spacing: 0.3px; min-height: 20px;
+  }
+  .lf-label span { color: #7a6d99; margin-left: 6px; font-size: 11px; }
+
+  @media (max-width: 600px) {
+    .stage { height: 190px; }
+    .lf-card { width: 270px; }
+    .lf-card.prev  { transform: translateX(-190px) scale(0.75) rotateY(18deg); }
+    .lf-card.prev2 { transform: translateX(-290px) scale(0.6) rotateY(28deg); }
+    .lf-card.next  { transform: translateX(190px) scale(0.75) rotateY(-18deg); }
+    .lf-card.next2 { transform: translateX(290px) scale(0.6) rotateY(-28deg); }
+  }
+
+  /* --- DESIGN PANEL --- */
+  .img-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  @media (max-width: 600px) { .img-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .img-card {
+    background: #2a2535;
+    border-radius: 12px;
+    border: 1px solid rgba(140,110,200,0.25);
+    overflow: hidden;
+    aspect-ratio: 1/1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .img-card:hover { transform: translateY(-3px); border-color: rgba(160,130,220,0.55); }
+  .img-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .img-placeholder {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(160deg, #1e1a2e 0%, #2d2040 100%);
+  }
+  .img-placeholder span { font-size: 11px; color: #5a4d7a; letter-spacing: 0.5px; }
+
+  /* Modal */
+  .modal-bg {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(10,8,20,0.88); align-items: center; justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal-box {
+    position: relative; width: min(340px, 90vw); aspect-ratio: 9/16;
+    border-radius: 16px; overflow: hidden; background: #1e1a2e;
+    border: 1px solid rgba(140,110,200,0.4);
+  }
+  .modal-box iframe { width: 100%; height: 100%; border: none; display: block; }
+  .modal-close {
+    position: absolute; top: -40px; right: 0;
+    background: none; border: none; color: #ccc4e0; font-size: 22px; cursor: pointer;
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; line-height: 1;
+  }
+  .modal-close:hover { color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="portfolio">
+
+  <!-- Tab buttons -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('video', this)">Video Editing</button>
+    <button class="tab-btn" onclick="switchTab('design', this)">Design / Art</button>
+  </div>
+
+  <!-- Video Editing Panel -->
+  <div class="panel active" id="panel-video">
+
+    <!-- Shortform -->
+    <p class="section-heading">Shortform</p>
+    <div class="grid-wrap">
+      <div class="grid">
+
+        <div class="vid-card" onclick="openModal('pPmNV0DAdsU')">
+          <div class="vid-thumb">
+            <img src="https://img.youtube.com/vi/pPmNV0DAdsU/hqdefault.jpg" alt="Apex Legends">
+            <div class="play-overlay"><div class="play-btn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg></div></div>
+          </div>
+          <div class="vid-info"><p class="vid-title">Apex Legends</p><p class="vid-platform">YouTube</p></div>
+        </div>
+
+        <div class="vid-card" onclick="openModal('gp_MgT6rZAc')">
+          <div class="vid-thumb">
+            <img src="https://img.youtube.com/vi/gp_MgT6rZAc/hqdefault.jpg" alt="Genshin Impact">
+            <div class="play-overlay"><div class="play-btn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg></div></div>
+          </div>
+          <div class="vid-info"><p class="vid-title">Genshin Impact</p><p class="vid-platform">YouTube</p></div>
+        </div>
+
+        <div class="vid-card" onclick="openModal('tlxTkai24QY')">
+          <div class="vid-thumb">
+            <img src="https://img.youtube.com/vi/tlxTkai24QY/hqdefault.jpg" alt="Valorant">
+            <div class="play-overlay"><div class="play-btn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg></div></div>
+          </div>
+          <div class="vid-info"><p class="vid-title">Valorant</p><p class="vid-platform">YouTube</p></div>
+        </div>
+
+        <div class="vid-card" onclick="openModal('FPQF-JCuifs')">
+          <div class="vid-thumb">
+            <img src="https://img.youtube.com/vi/FPQF-JCuifs/hqdefault.jpg" alt="Just Chatting">
+            <div class="play-overlay"><div class="play-btn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg></div></div>
+          </div>
+          <div class="vid-info"><p class="vid-title">Just Chatting</p><p class="vid-platform">YouTube</p></div>
+        </div>
+
+        <div class="vid-card" onclick="openModal('jSILjRvv9zY')">
+          <div class="vid-thumb">
+            <img src="https://img.youtube.com/vi/jSILjRvv9zY/hqdefault.jpg" alt="Marvel Rivals">
+            <div class="play-overlay"><div class="play-btn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg></div></div>
+          </div>
+          <div class="vid-info"><p class="vid-title">Marvel Rivals</p><p class="vid-platform">YouTube</p></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="section-divider"></div>
+
+    <!-- Longform -->
+    <p class="section-heading">Longform</p>
+    <div class="lf-wrap">
+      <div class="stage" id="stage"></div>
+      <div class="lf-label" id="lf-label"></div>
+      <div class="lf-nav">
+        <button class="nav-btn" id="lf-prev" onclick="lfMove(-1)">&#8592;</button>
+        <div class="lf-dots" id="lf-dots"></div>
+        <button class="nav-btn" id="lf-next" onclick="lfMove(1)">&#8594;</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Design / Art Panel -->
+  <div class="panel" id="panel-design">
+    <div class="img-grid">
+      <div class="img-card"><div class="img-placeholder"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="3" width="22" height="22" rx="4" stroke="#5a4d7a" stroke-width="1.5"/><circle cx="10" cy="10" r="2" fill="#5a4d7a"/><path d="M3 19l6-5 4 4 4-5 8 7" stroke="#5a4d7a" stroke-width="1.5" stroke-linejoin="round"/></svg><span>your image</span></div></div>
+      <div class="img-card"><div class="img-placeholder"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="3" width="22" height="22" rx="4" stroke="#5a4d7a" stroke-width="1.5"/><circle cx="10" cy="10" r="2" fill="#5a4d7a"/><path d="M3 19l6-5 4 4 4-5 8 7" stroke="#5a4d7a" stroke-width="1.5" stroke-linejoin="round"/></svg><span>your image</span></div></div>
+      <div class="img-card"><div class="img-placeholder"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="3" width="22" height="22" rx="4" stroke="#5a4d7a" stroke-width="1.5"/><circle cx="10" cy="10" r="2" fill="#5a4d7a"/><path d="M3 19l6-5 4 4 4-5 8 7" stroke="#5a4d7a" stroke-width="1.5" stroke-linejoin="round"/></svg><span>your image</span></div></div>
+      <div class="img-card"><div class="img-placeholder"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="3" width="22" height="22" rx="4" stroke="#5a4d7a" stroke-width="1.5"/><circle cx="10" cy="10" r="2" fill="#5a4d7a"/><path d="M3 19l6-5 4 4 4-5 8 7" stroke="#5a4d7a" stroke-width="1.5" stroke-linejoin="round"/></svg><span>your image</span></div></div>
+      <div class="img-card"><div class="img-placeholder"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="3" width="22" height="22" rx="4" stroke="#5a4d7a" stroke-width="1.5"/><circle cx="10" cy="10" r="2" fill="#5a4d7a"/><path d="M3 19l6-5 4 4 4-5 8 7" stroke="#5a4d7a" stroke-width="1.5" stroke-linejoin="round"/></svg><span>your image</span></div></div>
+      <div class="img-card"><div class="img-placeholder"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="3" width="22" height="22" rx="4" stroke="#5a4d7a" stroke-width="1.5"/><circle cx="10" cy="10" r="2" fill="#5a4d7a"/><path d="M3 19l6-5 4 4 4-5 8 7" stroke="#5a4d7a" stroke-width="1.5" stroke-linejoin="round"/></svg><span>your image</span></div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Shortform modal -->
+<div class="modal-bg" id="modal" onclick="closeOnBg(event)">
+  <div style="position:relative;">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-box" id="modal-box"></div>
+  </div>
+</div>
+
+<script>
+  // Tab switching
+  function switchTab(name, btn) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // Shortform modal
+  function openModal(id) {
+    document.getElementById('modal-box').innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    document.getElementById('modal').classList.add('open');
+  }
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    document.getElementById('modal-box').innerHTML = '';
+  }
+  function closeOnBg(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  // Longform carousel
+  const lfVideos = [
+    { id: 'FDbqX22Rokg', title: 'Genshin Impact' },
+    { id: 'PLdXquj3fnc', title: 'Apex Legends' },
+    { id: 'n1d9_3uWzUk', title: 'Marvel Rivals' },
+    { id: 'gC2lgP9DVcg', title: 'Minecraft' },
+    { id: '5cPrRh2p-3A', title: 'IRL' },
+  ];
+
+  let lfCurrent = 0;
+  const stage = document.getElementById('stage');
+  const lfDotsEl = document.getElementById('lf-dots');
+  const lfLabelEl = document.getElementById('lf-label');
+
+  const lfCards = lfVideos.map((v, i) => {
+    const card = document.createElement('div');
+    card.className = 'lf-card hidden';
+    card.innerHTML = `<iframe src="https://www.youtube.com/embed/${v.id}?rel=0&modestbranding=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    card.addEventListener('click', () => { if (i !== lfCurrent) { lfCurrent = i; lfRender(); } });
+    stage.appendChild(card);
+    return card;
+  });
+
+  lfVideos.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'lf-dot';
+    d.addEventListener('click', () => { lfCurrent = i; lfRender(); });
+    lfDotsEl.appendChild(d);
+  });
+
+  function lfRender() {
+    lfCards.forEach((card, i) => {
+      const diff = i - lfCurrent;
+      card.className = 'lf-card';
+      if (diff === 0)       card.classList.add('active');
+      else if (diff === -1) card.classList.add('prev');
+      else if (diff === -2) card.classList.add('prev2');
+      else if (diff === 1)  card.classList.add('next');
+      else if (diff === 2)  card.classList.add('next2');
+      else                  card.classList.add('hidden');
+    });
+    document.querySelectorAll('.lf-dot').forEach((d, i) => d.classList.toggle('active', i === lfCurrent));
+    lfLabelEl.innerHTML = `${lfVideos[lfCurrent].title} <span>YouTube</span>`;
+    document.getElementById('lf-prev').style.opacity = lfCurrent === 0 ? '0.3' : '1';
+    document.getElementById('lf-next').style.opacity = lfCurrent === lfVideos.length - 1 ? '0.3' : '1';
+  }
+
+  function lfMove(dir) {
+    lfCurrent = Math.max(0, Math.min(lfCurrent + dir, lfVideos.length - 1));
+    lfRender();
+  }
+
+  lfRender();
+</script>
+
+</body>
+</html>
